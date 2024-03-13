@@ -8,9 +8,7 @@
 
 # Prestashop 8.1 with PHP FPM 8+
 
-Docker container image for Wordpress development
-
-The objective of this repository is having a CaaS [Containers as a Service](https://www.ibm.com/topics/containers-as-a-service) to provide a start up application with the basic enviroment features to deploy a php service running with Nginx and PHP-FPM in a container for [WordPress](https://wordpress.org) and another container with a MySQL database to follow the best practices on an easy scenario to understand and modify on development requirements.
+The objective of this repository is having a CaaS [Containers as a Service](https://www.ibm.com/topics/containers-as-a-service) to provide a start up application with the basic enviroment features to deploy a php service running with Nginx and PHP-FPM in a container for [Prestashop](https://prestashop.com) and another container with a MySQL database to follow the best practices on an easy scenario to understand and modify on development requirements.
 
 The connection between container is as [Host Network](https://docs.docker.com/network/drivers/host/) on `eth0`, thus both containers do not share networking or bridge configuration.
 
@@ -43,7 +41,7 @@ As client end user both services can be accessed through `localhost:${PORT}` but
 * The services Nginx, PHP-FPM and supervisord run under a project-privileged user to make it more secure
 * The logs of all the services are redirected to the output of the Docker container (visible with `docker logs -f <container name>`)
 * Follows the KISS principle (Keep It Simple, Stupid) to make it easy to understand and adjust the image to your needs
-* Services independence to connect WordPress to other database allocation
+* Services independency to connect the application to other database allocation
 
 #### Containers on Windows systems
 
@@ -161,10 +159,10 @@ Checkout local machine ports availability
 ```bash
 $ make ports-check
 
-Checking configuration for WORDPRESS container:
-WORDPRESS > port:8888 is free to use.
-Checking configuration for WORDPRESS DB container:
-WORDPRESS DB > port:8889 is free to use.
+Checking configuration for PRESTASHOP container:
+PRESTASHOP > port:8888 is free to use.
+Checking configuration for PRESTASHOP DB container:
+PRESTASHOP DB > port:8889 is free to use.
 ```
 
 Checkout local machine IP to set connection between containers using the following makefile recipe

@@ -25,6 +25,3 @@ dist-ssr
 *.local
 
 Docs.md
-READ-II.md
-/resources/module
-/resources/theme
