@@ -38,12 +38,9 @@ ports-check: ## shows this project ports availability on local machine
 	cd docker/mariadb && $(MAKE) port-check
 
 # -------------------------------------------------------------------------------------------------
-#  Prestashop
+#  Prestashop Service
 # -------------------------------------------------------------------------------------------------
-.PHONY: prestashop-download prestashop-ssh prestashop-set prestashop-build prestashop-start prestashop-stop prestashop-destroy
-
-prestashop-download: ## dowloads the Prestashop zip source into project root
-	curl https://github.com/PrestaShop/PrestaShop/releases/download/8.1.4/prestashop_8.1.4.zip -O -J -L
+.PHONY: prestashop-ssh prestashop-set prestashop-build prestashop-start prestashop-stop prestashop-destroy
 
 prestashop-ssh: ## enters the Prestashop container shell
 	cd docker/nginx-php && $(MAKE) ssh
@@ -55,16 +52,16 @@ prestashop-build: ## builds the Prestashop PHP container from Docker image
 	cd docker/nginx-php && $(MAKE) build
 
 prestashop-start: ## starts up the Prestashop PHP container running
-	cd docker/nginx-php && $(MAKE) up
+	cd docker/nginx-php && $(MAKE) start
 
 prestashop-stop: ## stops the Prestashop PHP container but data won't be destroyed
 	cd docker/nginx-php && $(MAKE) stop
 
-prestashop-destroy: ## stops and removes the Prestashop PHP container from Docker network destroying its data
-	cd docker/nginx-php && $(MAKE) stop clear
+prestashop-destroy: ## removes the Prestashop PHP from Docker network destroying its data and Docker image
+	cd docker/nginx-php && $(MAKE) clear destroy
 
 # -------------------------------------------------------------------------------------------------
-#  Prestashop - MariaDB Database
+#  Database Service
 # -------------------------------------------------------------------------------------------------
 .PHONY: database-ssh database-set database-build database-start database-stop database-destroy database-replace database-backup
 
@@ -96,10 +93,10 @@ database-replace: ## replaces container database copying the determined .sql fil
 
 database-backup: ## creates a .sql file from container database to the determined local host directory
 	cd docker/mariadb && $(MAKE) sql-backup
-	echo ${C_BLU}"$(DOCKER_TITLE)"${C_END}" database backup "${C_GRN}"has been created."${C_END};
+	echo ${C_BLU}"$(DOCKER_TITLE)"${C_END}" database "${C_GRN}"backup has been created."${C_END};
 
 # -------------------------------------------------------------------------------------------------
-#  Prestashop Project
+#  Prestashop & Database
 # -------------------------------------------------------------------------------------------------
 .PHONY: project-set project-build project-start project-stop project-destroy
 
@@ -117,14 +114,6 @@ project-stop: ## stops both Prestashop and database containers but data won't be
 
 project-destroy: ## stops and removes both Prestashop and database containers from Docker network destroying their data
 	$(MAKE) database-destroy prestashop-destroy
-
-# -------------------------------------------------------------------------------------------------
-#  Prestashop Example Plugin
-# -------------------------------------------------------------------------------------------------
-.PHONY: plugin-zip
-
-plugin-zip:
-	cd resources/plugin/dev && zip -r ../pr-custom.zip *
 
 # -------------------------------------------------------------------------------------------------
 #  Repository Helper
