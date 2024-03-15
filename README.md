@@ -6,7 +6,7 @@
     </a>
 </div>
 
-# Prestashop 8.1 with PHP FPM 8+
+# Docker Prestashop 8.1 with PHP FPM 8+
 
 The objective of this repository is having a CaaS [Containers as a Service](https://www.ibm.com/topics/containers-as-a-service) to provide a start up application with the basic enviroment features to deploy a php service running with Nginx and PHP-FPM in a container for [Prestashop](https://prestashop.com) and another container with a MySQL database to follow the best practices on an easy scenario to understand and modify on development requirements.
 
