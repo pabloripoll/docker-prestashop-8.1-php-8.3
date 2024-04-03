@@ -1,8 +1,6 @@
 <div style="width:100%;float:left;clear:both;margin-bottom:50px;">
     <a href="https://github.com/pabloripoll?tab=repositories">
-        <img
-            style="width:150px;float:left;"
-            src="https://pabloripoll.com/files/logo-light-100x300.png"/>
+        <img style="width:150px;float:left;" src="https://pabloripoll.com/files/logo-light-100x300.png"/>
     </a>
 </div>
 
@@ -24,11 +22,10 @@ As client end user both services can be accessed through `localhost:${PORT}` but
 
 - [Alpine Linux 3.19](https://www.alpinelinux.org/)
 
-### MariaDB Docker Container Service
+### Database Container Service
 
-- [MariaDB 10.11](https://mariadb.com/kb/en/changes-improvements-in-mariadb-1011/)
-
-- [Alpine Linux 3.19](https://www.alpinelinux.org/)
+To connect this service to a SQL database, it can be used the following [MariaDB 10.11](https://mariadb.com/kb/en/changes-improvements-in-mariadb-1011/) service:
+- [https://github.com/pabloripoll/docker-mariadb-10.11](https://github.com/pabloripoll/docker-mariadb-10.11)
 
 ### Project objetives with Docker
 
@@ -80,11 +77,6 @@ Directories and main files on a tree architecture description
 .
 │
 ├── docker
-│   ├── mariadb
-│   │   ├── ...
-│   │   ├── .env.example
-│   │   └── docker-compose.yml
-│   │
 │   └── nginx-php
 │       ├── ...
 │       ├── .env.example
@@ -139,19 +131,6 @@ Makefile  prestashop-build         builds the Prestashop PHP container from Dock
 Makefile  prestashop-start         starts up the Prestashop PHP container running
 Makefile  prestashop-stop          stops the Prestashop PHP container but data will not be destroyed
 Makefile  prestashop-destroy       stops and removes the Prestashop PHP container from Docker network destroying its data
-Makefile  database-ssh             enters the database container shell
-Makefile  database-set             sets the database enviroment file to build the container
-Makefile  database-build           builds the database container from Docker image
-Makefile  database-start           starts up the database container running
-Makefile  database-stop            stops the database container but data will not be destroyed
-Makefile  database-destroy         stops and removes the database container from Docker network destroying its data
-Makefile  database-replace         replace the build empty database copying the .sql backfile file into the container raplacing the pre-defined database
-Makefile  database-backup          creates a copy as .sql file from container to a determined local host directory
-Makefile  project-set              sets both Prestashop and database .env files used by docker-compose.yml
-Makefile  project-build            builds both Prestashop and database containers from their Docker images
-Makefile  project-start            starts up both Prestashop and database containers running
-Makefile  project-stop             stops both Prestashop and database containers but data will not be destroyed
-Makefile  project-destroy          stops and removes both Prestashop and database containers from Docker network destroying their data
 Makefile  repo-flush               clears local git repository cache specially to update .gitignore
 ```
 
@@ -161,8 +140,6 @@ $ make ports-check
 
 Checking configuration for PRESTASHOP container:
 PRESTASHOP > port:8888 is free to use.
-Checking configuration for PRESTASHOP DB container:
-PRESTASHOP DB > port:8889 is free to use.
 ```
 
 Checkout local machine IP to set connection between containers using the following makefile recipe
@@ -172,28 +149,11 @@ $ make hostname
 192.168.1.41
 ```
 
-**Before running the project** checkout database connection health using a database mysql client.
-
-- [MySQL Workbench](https://www.mysql.com/products/workbench/)
-- [DBeaver](https://dbeaver.io/)
-- [HeidiSQL](https://www.heidisql.com/)
-- Or whatever you like. This Docker project doesn't come with [PhpMyAdmin](https://www.phpmyadmin.net/) to make it lighter.
-
 ## Build the project
 ```bash
-$ make project-build
+$ make prestashop-build
 
 PRESTASHOP docker-compose.yml .env file has been set.
-PRESTASHOP DB docker-compose.yml .env file has been set.
-
-[+] Building 9.1s (10/10) FINISHED                                     docker:default
- => [mariadb internal] load build definition from Dockerfile           0.0s
- => => transferring dockerfile: 1.13kB
-...
- => => naming to docker.io/library/ps-db:mariadb-15                    0.0s
-[+] Running 1/2
- ⠧ Network ps-db_default  Created                                      0.7s
- ✔ Container ps-db        Started                                      0.6s
 
 [+] Building 49.7s (25/25)                                             docker:default
  => [prestashop internal] load build definition from Dockerfile         0.0s
@@ -215,10 +175,8 @@ $ make hostname
 ## Running the project
 
 ```bash
-$ make project-start
+$ make prestashop-start
 
-[+] Running 1/0
- ✔ Container ps-db  Running                       0.0s
 [+] Running 1/0
  ✔ Container ps-app  Running                      0.0s
  ```
@@ -227,63 +185,6 @@ Now, Prestashop should be available on local machine by visiting [http://localho
 
 - To make this happends rename the directory **install_x** to just **install**
 
-## Database
-
-Every time the containers are built or up and running it will be like start from a fresh installation, displaying Prestashop Wizard on screen.
-
-So, you can follow the Prestashop Wizard steps to configure the project at requirements *(language, ip and port, etc)* with fresh database tables.
-
-On the other hand, you can continue using this repository with the pre-set database executing the command `$ make database-install`
-
-Follow the next recommendations to keep development stages clear and safe.
-
-*On first installation* once Prestashop app is running with an admin back-office user set, I suggest to make a initialization database backup manually, saving as [resources/database/prestashop-backup.sql](resources/database/prestashop-backup.sql) but renaming as [resources/database/prestashop-init.sql](resources/database/prestashop-init.sql) to have that init database for any Docker compose rebuild / restart on next time.
-
-**The following three commands are very useful for *Continue Development*.**
-
-### DB Backup
-
-When Prestashop project is already in an advanced development stage, making a backup is recommended to avoid start again from installation step by keeping lastest database registers.
-```bash
-$ make database-backup
-
-PRESTASHOP database backup has been created.
-```
-
-### DB Install
-
-If it is needed to restart the project from base installation step, you can use the init database .sql file to restart at that point in time. Though is not common to use, helps to check and test installation health.
-```bash
-$ make database-install
-
-PRESTASHOP database has been installed.
-```
-
-This repository comes with an initialized .sql with a main admin user:
-- User: admin@example.com
-- Password: Admin#123?
-
-### DB Replace
-
-Replace the database set on container with the latest .sql backup into current development stage.
-```bash
-$ make database-replace
-
-PRESTASHOP database has been replaced.
-```
-
-#### Notes
-
-- Notice that both files in [resources/database/](resources/database/) have the database name that has been set on the main `.env` file to automate processes.
-
-- Remember that on any change in the main `.env` file will be necessary to execute the following Makefile recipe
-```bash
-$ make project-set
-
-PRESTASHOP docker-compose.yml .env file has been set.
-PRESTASHOP DB docker-compose.yml .env file has been set.
-```
-
 ## Docker Info
 
 Docker container
@@ -291,7 +192,6 @@ Docker container
 $ sudo docker ps -a
 CONTAINER ID   IMAGE      COMMAND    CREATED      STATUS      PORTS                                             NAMES
 ecd27aeae010   pres...   "docker-php-entrypoi…"   3 mins...   9000/tcp, 0.0.0.0:8888->80/tcp, :::8888->80/tcp   prestashop-app
-52a9994c31b0   pres...   "/init"                  4 mins...   0.0.0.0:8889->3306/tcp, :::8889->3306/tcp         prestashop-db
 
 ```
 
@@ -300,7 +200,6 @@ Docker image
 $ sudo docker images
 REPOSITORY   TAG           IMAGE ID       CREATED         SIZE
 pres...-app  pres...       373f6967199b   5 minutes ago   200MB
-pres...-db   pres...       1f1775f7e1db   6 minutes ago   333MB
 ```
 
 Docker stats
@@ -317,13 +216,8 @@ Build Cache     39        0         10.21kB   10.21kB
 
 Using the following Makefile recipe stops application and database containers, keeping database persistance and application files binded without any loss
 ```bash
-$ make project-stop
+$ make prestashop-stop
 
-[+] Killing 1/1
- ✔ Container prestashop-db  Killed               0.5s
-Going to remove prestashop-db
-[+] Removing 1/0
- ✔ Container prestashop-db  Removed              0.0s
 [+] Killing 1/1
  ✔ Container prestashop-app  Killed              0.5s
 Going to remove prestashop-app
@@ -335,15 +229,7 @@ Going to remove prestashop-app
 
 To stop and remove both application and database containers from docker network use the following Makefile recipe
 ```bash
-$ make project-destroy
-
-[+] Killing 1/1
- ✔ Container prestashop-db  Killed                    0.4s
-Going to remove prestashop-db
-[+] Removing 1/0
- ✔ Container prestashop-db  Removed                   0.0s
-[+] Running 1/1
- ✔ Network prestashop-db_default  Removed             0.3s
+$ make prestashop-destroy
 
 [+] Killing 1/1
  ✔ Container prestashop-app  Killed                   0.4s
@@ -352,11 +238,6 @@ Going to remove prestashop-app
  ✔ Container prestashop-app  Removed                  0.0s
 [+] Running 1/1
  ✔ Network prestashop-app_default  Removed
-```
-
-The, remove the Docker images created for containers by its tag name reference
-```bash
-$ docker rmi $(docker images --filter=reference="*:prestashop-*" -q)
 ```
 
 Prune Docker system cache
