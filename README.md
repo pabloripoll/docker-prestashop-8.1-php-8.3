@@ -12,7 +12,7 @@ The connection between container is as [Host Network](https://docs.docker.com/ne
 
 As client end user both services can be accessed through `localhost:${PORT}` but the connection between containers is through the `${HOSTNAME}:${PORT}`.
 
-### Laravel Docker Container Service
+### Prestashop Docker Container Service
 
 - [Prestashop 8.1.4](https://build.prestashop-project.org/tag/8/) - *(latest)*
 
