@@ -29,91 +29,67 @@ help: ## shows this Makefile help message
 
 hostname: ## shows local machine ip
 	echo $(word 1,$(shell hostname -I))
+	echo $(ip addr show | grep "\binet\b.*\bdocker0\b" | awk '{print $2}' | cut -d '/' -f 1)
 
 fix-permission: ## sets project directory permission
 	$(DOCKER_USER) chown -R ${USER}: $(ROOT_DIR)/
 
-ports-check: ## shows this project ports availability on local machine
+host-check: ## shows this project ports availability on local machine
 	cd docker/nginx-php && $(MAKE) port-check
-	cd docker/mariadb && $(MAKE) port-check
 
 # -------------------------------------------------------------------------------------------------
-#  Prestashop Service
+#  Application Service
 # -------------------------------------------------------------------------------------------------
-.PHONY: prestashop-ssh prestashop-set prestashop-build prestashop-start prestashop-stop prestashop-destroy
+.PHONY: prestashop-ssh prestashop-set prestashop-create prestashop-start prestashop-stop prestashop-destroy prestashop-install prestashop-update
 
-prestashop-ssh: ## enters the Prestashop container shell
+prestashop-ssh: ## enters the application container shell
 	cd docker/nginx-php && $(MAKE) ssh
 
-prestashop-set: ## sets the Prestashop PHP enviroment file to build the container
+prestashop-set: ## sets the application PHP enviroment file to build the container
 	cd docker/nginx-php && $(MAKE) env-set
 
-prestashop-build: ## builds the Prestashop PHP container from Docker image
-	cd docker/nginx-php && $(MAKE) build
+prestashop-create: ## creates the application PHP container from Docker image
+	cd docker/nginx-php && $(MAKE) env-set build up
 
-prestashop-start: ## starts up the Prestashop PHP container running
+prestashop-start: ## starts the application PHP container running
 	cd docker/nginx-php && $(MAKE) start
 
-prestashop-stop: ## stops the Prestashop PHP container but data won't be destroyed
+prestashop-stop: ## stops the application PHP container but data will not be destroyed
 	cd docker/nginx-php && $(MAKE) stop
 
-prestashop-destroy: ## removes the Prestashop PHP from Docker network destroying its data and Docker image
+prestashop-destroy: ## removes the application PHP from Docker network destroying its data and Docker image
 	cd docker/nginx-php && $(MAKE) clear destroy
 
-# -------------------------------------------------------------------------------------------------
-#  Database Service
-# -------------------------------------------------------------------------------------------------
-.PHONY: database-ssh database-set database-build database-start database-stop database-destroy database-replace database-backup
+prestashop-install: ## installs the application pre-defined version with its dependency packages into container
+	curl https://github.com/PrestaShop/PrestaShop/releases/download/8.1.4/prestashop_8.1.4.zip -O -J -L
 
-database-ssh: ## enters the database container shell
-	cd docker/mariadb && $(MAKE) ssh
-
-database-set: ## sets the database enviroment file to build the container
-	cd docker/mariadb && $(MAKE) env-set
-
-database-build: ## builds the database container from Docker image
-	cd docker/mariadb && $(MAKE) build
-
-database-start: ## starts up the database container running
-	cd docker/mariadb && $(MAKE) up
-
-database-stop: ## stops the database container but data won't be destroyed
-	cd docker/mariadb && $(MAKE) stop
-
-database-destroy: ## stops and removes the database container from Docker network destroying its data
-	cd docker/mariadb && $(MAKE) stop clear
-
-database-install: ## installs an initialized database copying the determined .sql file into the container by raplacing it
-	cd docker/mariadb && $(MAKE) sql-install
-	echo ${C_BLU}"$(DOCKER_TITLE)"${C_END}" database has been "${C_GRN}"installed."${C_END};
-
-database-replace: ## replaces container database copying the determined .sql file into the container by raplacing it
-	cd docker/mariadb && $(MAKE) sql-replace
-	echo ${C_BLU}"$(DOCKER_TITLE)"${C_END}" database has been "${C_GRN}"replaced."${C_END};
-
-database-backup: ## creates a .sql file from container database to the determined local host directory
-	cd docker/mariadb && $(MAKE) sql-backup
-	echo ${C_BLU}"$(DOCKER_TITLE)"${C_END}" database "${C_GRN}"backup has been created."${C_END};
+prestashop-update: ## updates the application dependency packages into container
+	cd docker/nginx-php && $(MAKE) app-update
 
 # -------------------------------------------------------------------------------------------------
-#  Prestashop & Database
+#  Prestashop Plugin
 # -------------------------------------------------------------------------------------------------
-.PHONY: project-set project-build project-start project-stop project-destroy
+.PHONY: plugin-zip
 
-project-set: ## sets both Prestashop and database .env files used by docker-compose.yml
-	$(MAKE) prestashop-set database-set
+plugin-zip:
+	cd resources/plugin/dev && zip -r ../pr-custom.zip *
 
-project-build: ## builds both Prestashop and database containers from their Docker images
-	$(MAKE) prestashop-set database-set database-build prestashop-build
+# -------------------------------------------------------------------------------------------------
+#  Database Container Service
+# -------------------------------------------------------------------------------------------------
+.PHONY: database-install database-replace database-backup
 
-project-start: ## starts up both Prestashop and database containers running
-	$(MAKE) database-start prestashop-start
+database-install: ## installs into container database the init sql file from resources/database
+	sudo docker exec -i $(DB_CAAS) sh -c 'exec mysql $(DB_NAME) -uroot -p"$(DB_ROOT)"' < $(DB_BACKUP_PATH)/$(DB_BACKUP_NAME)-init.sql
+	echo ${C_YEL}"DATABASE"${C_END}" has been installed."
 
-project-stop: ## stops both Prestashop and database containers but data won't be destroyed
-	$(MAKE) database-stop prestashop-stop
+database-replace: ## replaces container database with the latest sql backup file from resources/database
+	sudo docker exec -i $(DB_CAAS) sh -c 'exec mysql $(DB_NAME) -uroot -p"$(DB_ROOT)"' < $(DB_BACKUP_PATH)/$(DB_BACKUP_NAME)-backup.sql
+	echo ${C_YEL}"DATABASE"${C_END}" has been replaced."
 
-project-destroy: ## stops and removes both Prestashop and database containers from Docker network destroying their data
-	$(MAKE) database-destroy prestashop-destroy
+database-backup: ## creates / replace a sql backup file from container database in resources/database
+	sudo docker exec $(DB_CAAS) sh -c 'exec mysqldump $(DB_NAME) -uroot -p"$(DB_ROOT)"' > $(DB_BACKUP_PATH)/$(DB_BACKUP_NAME)-backup.sql
+	echo ${C_YEL}"DATABASE"${C_END}" backup has been created."
 
 # -------------------------------------------------------------------------------------------------
 #  Repository Helper
